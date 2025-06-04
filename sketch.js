@@ -8,10 +8,10 @@ let stars = []; // 星空
 // 關卡資料
 let levels = [
   { letters: ['A', 'B', 'T', 'A', 'D'], target: 'T' },
-  { letters: ['K', 'U', 'E', 'T', 'B'], target: 'E' },
-  { letters: ['T', 'K', 'U', 'E', 'T'], target: 'K' },
-  { letters: ['U', 'E', 'T', 'K', 'A'], target: 'U' },
-  { letters: ['E', 'T', 'K', 'U', 'T'], target: 'T' }
+  { letters: ['C', 'U', 'E', 'Y', 'K'], target: 'K' },
+  { letters: ['T', 'K', 'U', 'B', 'T'], target: 'U' },
+  { letters: ['U', 'W', 'S', 'K', 'E'], target: 'E' },
+  { letters: ['E', 'L', 'M', 'U', 'T'], target: 'T' }
 ];
 let currentLevel = 0;
 let letterObjs = [];
@@ -68,14 +68,32 @@ function windowResized() {
 }
 
 function initLevel() {
-  // 隨機分布字母
+  // 計算鏡頭畫面區域
+  let baseSize = min(width, height) / 10;
+  let titleY = height * 0.07;
+  let camScale = 0.7;
+  let camW, camH;
+  if (width / height > 16 / 9) {
+    camH = height * camScale;
+    camW = camH * 16 / 9;
+  } else {
+    camW = width * camScale;
+    camH = camW * 9 / 16;
+  }
+  let camTop = titleY + baseSize + 30;
+  let camBottom = height;
+  let availableH = camBottom - camTop;
+  let camY = camTop + (availableH - camH) / 2;
+  let camX = (width - camW) / 2;
+
+  // 隨機分布字母（只在鏡頭畫面內）
   letterObjs = [];
   let letters = levels[currentLevel]?.letters || [];
   for (let i = 0; i < letters.length; i++) {
     letterObjs.push({
       char: letters[i],
-      x: random(width * 0.2, width * 0.8),
-      y: random(height * 0.4, height * 0.8),
+      x: random(camX + camW * 0.1, camX + camW * 0.9),
+      y: random(camY + camH * 0.1, camY + camH * 0.9),
       size: min(width, height) / 8,
       grabbed: false
     });
@@ -87,7 +105,6 @@ function initLevel() {
   boxY = height * 0.15;
   grabbedLetter = null;
 }
-
 function draw() {
   // 星空背景
   background(10, 10, 30);
