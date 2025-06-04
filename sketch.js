@@ -18,6 +18,11 @@ let letterObjs = [];
 let grabbedLetter = null;
 let boxX, boxY, boxW, boxH;
 
+// 遊戲開始流程用
+let gameState = "ready"; // ready, countdown, playing, finished
+let startTime = 0;
+let countdownNum = 3;
+
 function preload() {
   handPose = ml5.handPose({ flipped: true });
 }
@@ -48,6 +53,10 @@ function setup() {
 
   initLevel();
   handPose.detectStart(video, gotHands);
+
+  // 遊戲開始流程
+  gameState = "ready";
+  startTime = millis();
 }
 
 function windowResized() {
@@ -105,6 +114,7 @@ function initLevel() {
   boxY = height * 0.15;
   grabbedLetter = null;
 }
+
 function draw() {
   // 星空背景
   background(10, 10, 30);
@@ -113,6 +123,48 @@ function draw() {
     fill(255, 255, 255, s.alpha);
     ellipse(s.x, s.y, s.r, s.r);
   }
+
+  // 遊戲流程控制
+  if (gameState === "ready") {
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(min(width, height) / 8);
+    text("遊戲即將開始", width / 2, height / 2);
+    if (millis() - startTime > 2000) {
+      gameState = "countdown";
+      countdownNum = 3;
+      startTime = millis();
+    }
+    return;
+  }
+
+  if (gameState === "countdown") {
+    let elapsed = millis() - startTime;
+    let count = 3 - floor(elapsed / 1000);
+    if (count !== countdownNum && count > 0) {
+      countdownNum = count;
+    }
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(min(width, height) / 4);
+    text(countdownNum, width / 2, height / 2);
+    if (elapsed > 3000) {
+      gameState = "playing";
+      startTime = millis();
+    }
+    return;
+  }
+
+  // 遊戲結束提示
+  if (gameState === "finished" || currentLevel >= levels.length) {
+    fill(255);
+    textSize(min(width, height) / 8);
+    textAlign(CENTER, CENTER);
+    text("全部過關！", width / 2, height / 2);
+    return;
+  }
+
+  // ====== 以下為遊戲主畫面 ======
 
   // 標題
   let title = "教科抓抓王";
@@ -210,7 +262,7 @@ function draw() {
       let pinchDist = dist(indexFinger.x, indexFinger.y, thumb.x, thumb.y);
 
       // 抓取字母
-      if (pinchDist < 40) { // 兩指靠近
+      if (pinchDist < 60) { // 兩指靠近，數值可再調大
         if (!grabbedLetter) {
           // 檢查是否有字母被夾住
           for (let obj of letterObjs) {
@@ -238,14 +290,7 @@ function draw() {
             // 過關
             currentLevel++;
             if (currentLevel >= levels.length) {
-              // 全部完成
-              setTimeout(() => {
-                fill(255, 255, 0);
-                textSize(min(width, height) / 8);
-                textAlign(CENTER, CENTER);
-                text("全部過關！", width / 2, height / 2);
-                noLoop();
-              }, 100);
+              gameState = "finished";
             } else {
               initLevel();
             }
@@ -256,13 +301,5 @@ function draw() {
         }
       }
     }
-  }
-
-  // 完成提示
-  if (currentLevel >= levels.length) {
-    fill(255, 255, 0);
-    textSize(min(width, height) / 8);
-    textAlign(CENTER, CENTER);
-    text("全部過關！", width / 2, height / 2);
   }
 }
